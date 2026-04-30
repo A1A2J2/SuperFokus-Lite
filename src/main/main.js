@@ -4,16 +4,6 @@ const fs = require('fs');
 const http = require('http');
 const net = require('net');
 const util = require('util');
-const sudo = require('sudo-prompt');
-const { normalizeHost } = require('./utils');
-
-// Polyfills for sudo-prompt which expects these to exist on the util module
-if (typeof util.isObject !== 'function') {
-    util.isObject = (obj) => obj !== null && typeof obj === 'object';
-}
-if (typeof util.isFunction !== 'function') {
-    util.isFunction = (fn) => typeof fn === 'function';
-}
 
 let store;
 (async () => {
@@ -47,140 +37,13 @@ let fullscreenWindow = null;
 let isQuitting = false;
 
 // Blocker state
-let blockerRules = {
-    mode: 'block', // 'block' or 'allow'
-    domains: [],
-    urls: [],
-    active: false,
-    alwaysRun: false
-};
-
 // Mac-specific blocker active flag
 let macBlockActive = false;
 let macFocusEnforcer = null;
-let proxyServer = null;
-const helperPath = app.isPackaged
-    ? path.join(process.resourcesPath, 'app.asar.unpacked', 'src', 'main', 'fokus-sb-helper.js')
-    : path.join(__dirname, 'fokus-sb-helper.js');
-let blocksApplied = false;
 
 let timers = {};
 let currentPopupIsBlocking = false;
 
-function startProxy(allowedHosts, allowedUrls) {
-    if (proxyServer) proxyServer.close();
-
-    const urlsArray = Array.isArray(allowedUrls) ? allowedUrls : Array.from(allowedUrls || []);
-
-    proxyServer = http.createServer((req, res) => {
-        const host = (req.headers.host || '').split(':')[0].toLowerCase();
-        const fullUrl = `http://${host}${req.url}`;
-
-        // Check if hostname is allowed
-        const hostAllowed = allowedHosts.has(host) || allowedHosts.has('www.' + host) ||
-                          host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
-
-        // Check if specific URL is allowed
-        const urlAllowed = urlsArray.some(allowedUrl => {
-            try {
-                const allowed = new URL(allowedUrl);
-                const requested = new URL(fullUrl);
-                return allowed.hostname === requested.hostname &&
-                       requested.pathname.startsWith(allowed.pathname);
-            } catch (e) {
-                return false;
-            }
-        });
-
-        if (hostAllowed || urlAllowed) {
-            res.writeHead(200, {'Content-Type': 'text/html'});
-            res.end('<html><body><h1>✓ Allowed by SuperFokus</h1></body></html>');
-        } else {
-            res.writeHead(503, {'Content-Type': 'text/html'});
-            res.end('<html><body style="font-family:Arial;margin:50px;background:#f8d7da;"><h1>⚠️ Service Unavailable</h1><p>This service is temporarily not operational during your focus session.</p></body></html>');
-        }
-    });
-
-    // Handle HTTPS CONNECT requests properly
-    proxyServer.on('connect', (req, clientSocket, head) => {
-        const host = req.url.split(':')[0].toLowerCase();
-        const port = req.url.split(':')[1] || 443;
-
-        // Check if hostname is allowed
-        let hostAllowed = allowedHosts.has(host) || allowedHosts.has('www.' + host) ||
-                          host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
-
-        if (!hostAllowed && urlsArray) {
-            hostAllowed = urlsArray.some(allowedUrl => {
-                try {
-                    const allowed = new URL(allowedUrl);
-                    return allowed.hostname === host || allowed.hostname === 'www.' + host || 'www.' + allowed.hostname === host;
-                } catch (e) {
-                    return false;
-                }
-            });
-        }
-
-        if (hostAllowed) {
-            // For allowed HTTPS sites, establish tunnel
-            const serverSocket = net.connect(port, host, () => {
-                clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-                serverSocket.write(head);
-                serverSocket.pipe(clientSocket);
-                clientSocket.pipe(serverSocket);
-            });
-
-            serverSocket.on('error', () => {
-                try { clientSocket.end(); } catch (e) {}
-            });
-
-            clientSocket.on('error', () => {
-                try { serverSocket.end(); } catch (e) {}
-            });
-        } else {
-            // Block disallowed HTTPS
-            clientSocket.end('HTTP/1.1 403 Forbidden\r\n\r\n');
-        }
-    });
-
-    proxyServer.listen(8080, '127.0.0.1', () => {
-        console.log('✓ SuperFokus proxy server listening on localhost:8080 (Allow-only mode)');
-        if (process.platform === 'win32') {
-            const { exec } = require('child_process');
-            exec('reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /v ProxyEnable /t REG_DWORD /d 1 /f && reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /v ProxyServer /t REG_SZ /d 127.0.0.1:8080 /f');
-        }
-    });
-
-    proxyServer.on('error', (err) => {
-        console.error('Proxy server error:', err);
-        // Don't crash the app on proxy errors
-        if (err.code === 'ECONNRESET') {
-            console.log('Connection reset by client - this is normal');
-        }
-    });
-
-    // Handle client errors gracefully
-    proxyServer.on('clientError', (err, socket) => {
-        console.log('Client connection error:', err.message);
-        try {
-            socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
-        } catch (e) {
-            // Socket might already be closed
-        }
-    });
-}
-
-function stopProxy() {
-    if (proxyServer) {
-        proxyServer.close();
-        proxyServer = null;
-        console.log('Proxy server stopped');
-        if (process.platform === 'win32') {
-            const { exec } = require('child_process');
-            exec('reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /v ProxyEnable /t REG_DWORD /d 0 /f');
-        }
-    }
-}
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 900,
@@ -933,20 +796,8 @@ app.whenReady().then(() => {
   }
   createApplicationMenu();
 
-  // Startup Cleanup: Clear any zombie blocks from previous ungraceful exits
-  runElevated('clear', (error) => {
-      if (error) {
-          console.log('[Startup] Failsafe check cancelled or failed.');
-      } else {
-          console.log('[Startup] Checked and cleared zombie blocks.');
-      }
-  });
-
   process.on('uncaughtException', (err) => {
       console.error('CRITICAL UNCAUGHT EXCEPTION:', err);
-      runElevated('clear', () => {
-          process.exit(1);
-      });
   });
 
   app.on('activate', () => {
@@ -984,111 +835,7 @@ ipcMain.on('blocker-stop', () => {
     if (popupWindow && !popupWindow.isDestroyed()) popupWindow.close();
 });
 
-function runElevated(args, callback) {
-    const nodePath = process.execPath;
-    // On Windows, we use ELECTRON_RUN_AS_NODE to execute a script with the Electron binary
-    const command = app.isPackaged 
-        ? `set ELECTRON_RUN_AS_NODE=1 && "${nodePath}" "${helperPath}" ${args}`
-        : `node "${helperPath}" ${args}`;
-    
-    sudo.exec(command, { name: 'SuperFokus' }, (error, stdout, stderr) => {
-        if (callback) callback(error, stdout, stderr);
-    });
-}
 
-function setMacProxy(enable) {
-    if (process.platform !== 'darwin') return;
-    const { exec } = require('child_process');
-    // Attempt to set proxy for common interface names. Robustness could be improved by listing all services.
-    const services = ['Wi-Fi', 'Ethernet', 'Thunderbolt Bridge'];
-    services.forEach(service => {
-        if (enable) {
-            exec(`networksetup -setwebproxy "${service}" 127.0.0.1 8080 && networksetup -setwebproxystate "${service}" on`);
-            exec(`networksetup -setsecurewebproxy "${service}" 127.0.0.1 8080 && networksetup -setsecurewebproxystate "${service}" on`);
-        } else {
-            exec(`networksetup -setwebproxystate "${service}" off`);
-            exec(`networksetup -setsecurewebproxystate "${service}" off`);
-        }
-    });
-}
-
-ipcMain.on('update-blocker-rules', (event, rules) => {
-    blockerRules = rules;
-    const allHosts = new Set();
-    const allUrls = new Set();
-
-    if (Array.isArray(rules.domains)) {
-        rules.domains.forEach(domain => {
-            const host = normalizeHost(domain);
-            if (host) allHosts.add(host);
-        });
-    }
-
-    if (Array.isArray(rules.urls)) {
-        rules.urls.forEach(url => {
-            allUrls.add(url.trim());
-        });
-    }
-
-    console.log('[Main] update-blocker-rules:', {mode: rules.mode, active: rules.active, hostCount: allHosts.size});
-
-    if (rules.mode === 'allow' && rules.active && allHosts.size > 0) {
-        console.log('[Block] Starting proxy server for allow-only mode');
-        startProxy(allHosts, allUrls);
-        if (process.platform === 'darwin') setMacProxy(true);
-        if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send('blocker-status', '✓ Allow-only mode ACTIVE.');
-        }
-    } else if (rules.mode === 'block' && rules.active && allHosts.size > 0) {
-        console.log('[Block] Applying hosts blocks for', allHosts.size, 'domains');
-        const domains = Array.from(allHosts);
-        const tempPath = path.join(app.getPath('userData'), 'fokus_domains.json');
-        
-        try {
-            fs.writeFileSync(tempPath, JSON.stringify(domains));
-            runElevated(`apply-file "${tempPath}"`, (error, stdout, stderr) => {
-                if (error) {
-                    console.error('[Block] Blocker elevation error:', error);
-                    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('blocker-error', error.message);
-                } else {
-                    blocksApplied = true;
-                    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('blocker-status', 'Domains blocked successfully');
-                }
-            });
-        } catch (e) {
-            console.error('[Block] File write error:', e);
-            if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('blocker-error', 'Failed to prepare domain list.');
-        }
-    } else {
-        console.log('[Block] Clearing blocks and stopping proxy');
-        stopProxy();
-        if (process.platform === 'darwin') setMacProxy(false);
-        if (blocksApplied) {
-            runElevated('clear', (error) => {
-                if (!error) blocksApplied = false;
-                if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('blocker-status', 'Blocks cleared');
-            });
-        }
-    }
-});
-
-ipcMain.on('clear-all-blocks', () => {
-    stopProxy();
-    runElevated('clear', (error, stdout, stderr) => {
-        if (error) {
-            console.error('Blocker elevation error:', error);
-            if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send('blocker-error', 'Failed to clear all blocks.');
-            }
-        } else {
-            console.log('All blocks cleared manually:', stdout);
-            blocksApplied = false;
-            if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send('blocker-status', 'All blocks cleared');
-            }
-        }
-    });
-});
 
 let healthIntervals = { eye: null, posture: null };
 let healthConfig = {
@@ -1137,7 +884,6 @@ app.on('before-quit', () => {
     isQuitting = true;
 });
 
-let isClearingOnQuit = false;
 app.on('will-quit', (e) => {
     // Gracefully clear all recurring background processes and active timers on quit
     clearInterval(tickInterval);
@@ -1147,16 +893,6 @@ app.on('will-quit', (e) => {
     timers = {};
     if (healthIntervals.eye) clearInterval(healthIntervals.eye);
     if (healthIntervals.posture) clearInterval(healthIntervals.posture);
-
-    stopProxy();
-    if (blocksApplied && !isClearingOnQuit) {
-        e.preventDefault();
-        isClearingOnQuit = true;
-        runElevated('clear', () => {
-            blocksApplied = false;
-            app.quit();
-        });
-    }
 });
 
 app.on('window-all-closed', () => {

@@ -1,6 +1,6 @@
-# SuperFokus
+# SuperFokus Lite
 
-SuperFokus is a versatile, Electron-based productivity application designed to help you regulate computer time, maintain healthy habits, and minimize digital distractions.
+SuperFokus Lite is a lightweight, Electron-based productivity application focused on core focus modes and healthy workflow support.
 
 ## Core Features (Fokus Modes)
 
@@ -32,11 +32,6 @@ The SuperFokus sidebar provides quick access to powerful tools and analytics wit
 
 - 📊 **Fokus Stats:** View your "Total Focus Time" and "Completed Rounds", alongside a visual chart of your activity over the last 7 days.
 - 📜 **Session History:** Check a local log of your past productivity sessions.
-- 🔒 **Site Blocker:**
-    - Block digital distractions system-wide.
-    - Choose to either *block* a blacklist of domains/URLs or *allow* only a whitelist.
-    - Can run independently in the background even if other Fokus modes are active.
-    - *Note: Requires Administrator privileges as it safely modifies the system hosts file.*
 - ❤️ **Health Mode (The "Body Guard"):**
     - **Eye Saver:** Enforces the 20-20-20 rule (every 20 minutes, look 20 feet away for 20 seconds).
     - **Posture Check:** Reminds you to stretch and adjust your posture every 45 minutes.
@@ -52,14 +47,7 @@ The SuperFokus sidebar provides quick access to powerful tools and analytics wit
 3. Set **Action at end of phase** to "Block screen AND remind" so you are forced to step away from your monitor during breaks.
 4. Select your desired number of **Cycles** (it will default to 4 cycles if you don't enter a number) and click **Start**.
 
-### Example 2: Blocking Distractions While Studying
-1. Open the sidebar (☰) and select **Site Blocker**.
-2. Toggle the Site Blocker switch to **Active** (granting administrator permissions when prompted).
-3. Set Blocker Mode to **Block only entered websites**.
-4. In the **Domain List**, enter `youtube.com`, `reddit.com`, and `x.com`.
-5. Click **Save & Apply Blocker**. You can now study distraction-free, optionally running a **Repeating Reminder** timer in the background.
-
-### Example 3: Health-Conscious Coding
+### Example 2: Health-Conscious Coding
 1. Open the sidebar (☰) and select **Health Mode**.
 2. Enable both **Eye Saver (20-20-20 Rule)** and **Posture Check**.
 3. Click **Start Health Mode**.
@@ -67,5 +55,4 @@ The SuperFokus sidebar provides quick access to powerful tools and analytics wit
 
 ## TECHNICAL DETAILS
 - Built with Electron.js.
-- Site Blocker utilizes a separate elevated helper script to modify the Windows `hosts` file (or any other system's `hosts` file) for true system-wide blocking.
 - Timer precision is maintained using a timestamp-based calculation approach rather than simple `setInterval` ticks to prevent timer drift over long sessions.

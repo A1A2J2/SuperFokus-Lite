@@ -1,7 +1,7 @@
 {
   "name": "fokus",
-  "version": "1.0.0-alpha",
-  "description": "Fokus is an Electron application designed to help regulate computer and homework time while minimizing distractions.",
+  "version": "1.0.0-lite-beta",
+  "description": "SuperFokus Lite is a lightweight Electron edition focused on core productivity modes without system-level blocking.",
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
@@ -27,9 +27,7 @@
       "createStartMenuShortcut": true
     },
     "asar": true,
-    "asarUnpack": [
-      "src/main/fokus-sb-helper.js"
-    ],
+    "asarUnpack": [],
     "files": [
       "src/**/*",
       "assets/**/*",
@@ -47,7 +45,6 @@
   },
   "dependencies": {
     "chart.js": "^4.5.1",
-    "electron-store": "^11.0.2",
-    "sudo-prompt": "^9.2.1"
+    "electron-store": "^11.0.2"
   }
 }

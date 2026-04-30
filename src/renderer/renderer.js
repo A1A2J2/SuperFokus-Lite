@@ -1,5 +1,5 @@
 import { setupWorkflowEventListeners, setupWorkflowPresetsEventListeners, isWorkflowRunning } from './features/workflows.js';
-import { ipcRenderer, normalizeHost } from './utils/ipc.js';
+import { ipcRenderer } from './utils/ipc.js';
 import { store, migrateStore } from './utils/storage.js';
 
 // Migrate data before initializing modules
@@ -14,7 +14,6 @@ import { isSprintRunning, stopSprintMode } from './features/micro-sprint.js';
 import { isFlowRunning, stopFlowState } from './features/flow-state.js';
 
 // Import modules that attach event listeners on load
-import './features/site-blocker.js';
 import './features/health-mode.js';
 
 // Startup Animation Logic
@@ -166,36 +165,6 @@ document.addEventListener('click', (e) => {
         stopFlowState();
     }
 
-    // 3. Site Blocker Save & Apply Button
-    const saveBlockerBtn = e.target.closest('#site-blocker-save-btn, #save-blocker-btn') || 
-                          (e.target.tagName === 'BUTTON' && e.target.innerText.includes('Save & Apply'));
-    if (saveBlockerBtn) {
-        try {
-            const container = saveBlockerBtn.closest('.active, .modal-content, .sidebar-modal, body') || document;
-            let mode = 'block';
-            const modeSelect = container.querySelector('select[id*="mode"]');
-            const modeCheck = container.querySelector('input[type="checkbox"][id*="mode"]');
-            if (modeSelect) mode = modeSelect.value.includes('allow') ? 'allow' : 'block';
-            else if (modeCheck) mode = modeCheck.checked ? 'allow' : 'block';
-            const active = container.querySelector('input[type="checkbox"][id*="active"], input[type="checkbox"][id*="enable"], input[type="checkbox"][id*="blocker-switch"]')?.checked || false;
-            const alwaysRun = container.querySelector('input[type="checkbox"][id*="always"]')?.checked || false;
-            const domainsText = container.querySelector('textarea[id*="domain"]')?.value || '';
-            const urlsText = container.querySelector('textarea[id*="url"]')?.value || '';
-            const domains = domainsText.split('\n').map(d => d.trim()).filter(Boolean);
-            const urls = urlsText.split('\n').map(u => u.trim()).filter(Boolean);
-            
-            ipcRenderer.send('update-blocker-rules', { mode, active, alwaysRun, domains, urls });
-            
-            // Visual feedback so you know the save actually executed
-            if (typeof customAlert === 'function') {
-                customAlert('Site Blocker rules have been successfully saved and applied!');
-            } else {
-                alert('Site Blocker rules saved!');
-            }
-        } catch (err) {
-            console.error('Fallback site blocker save failed:', err);
-        }
-    }
 }, true);
 
 // --- Mode Switching ---

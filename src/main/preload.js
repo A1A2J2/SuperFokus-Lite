@@ -25,8 +25,6 @@ const ALLOWED_SEND_CHANNELS = [
     'blocker-expand-fullscreen',
     'blocker-start',
     'blocker-stop',
-    'update-blocker-rules',
-    'clear-all-blocks',
     'start-health-mode',
     'stop-health-mode',
     'store-set'
