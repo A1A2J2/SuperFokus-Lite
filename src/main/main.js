@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, session, Tray, Menu, nativeImage, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, session, Tray, Menu, nativeImage, screen, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -48,6 +48,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 900,
     height: 700,
+    alwaysOnTop: false,
     icon: path.join(__dirname, '../../assets/fokusicon.png'),
     webPreferences: {
       nodeIntegration: false,
@@ -59,6 +60,19 @@ function createWindow() {
   mainWindow.maximize();
 
     mainWindow.loadFile(path.join(__dirname, '../../index.html'));
+
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    const currentUrl = mainWindow.webContents.getURL();
+    if (url !== currentUrl) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
+  });
 
   mainWindow.on('close', (event) => {
     if (!isQuitting) {
