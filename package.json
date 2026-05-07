@@ -12,8 +12,8 @@
   "dist:all": "electron-builder --mw"
 },
 "build": {
-    "appId": "com.superfokus.app",
-    "productName": "SuperFokus",
+    "appId": "com.superfokus-lite.app",
+    "productName": "SuperFokus-Lite",
     "directories": {
       "output": "dist"
     },
