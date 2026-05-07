@@ -15,6 +15,10 @@
       @property --container-bg { syntax: '<color>'; initial-value: rgba(255, 255, 255, 0.9); inherits: true; }
       @property --text-color { syntax: '<color>'; initial-value: #4a4a4a; inherits: true; }
       @property --heading-color { syntax: '<color>'; initial-value: #2c3e50; inherits: true; }
+      @property --h1-color { syntax: '<color>'; initial-value: #2c3e50; inherits: true; }
+      @property --h2-color { syntax: '<color>'; initial-value: #2c3e50; inherits: true; }
+      @property --h3-color { syntax: '<color>'; initial-value: #2c3e50; inherits: true; }
+      @property --header-title-color { syntax: '<color>'; initial-value: #ffffff; inherits: true; }
       @property --border-color { syntax: '<color>'; initial-value: #eee; inherits: true; }
       @property --input-border { syntax: '<color>'; initial-value: #dfe6e9; inherits: true; }
       @property --input-bg { syntax: '<color>'; initial-value: #fcfdfe; inherits: true; }
@@ -39,6 +43,10 @@
         --header-grad-2: #2575fc;
         --container-bg: rgba(255, 255, 255, 0.9);
         --heading-color: #2c3e50;
+        --h1-color: #2c3e50;
+        --h2-color: #2c3e50;
+        --h3-color: #2c3e50;
+        --header-title-color: #ffffff;
         --border-color: #eee;
         --input-border: #dfe6e9;
         --input-bg: #fcfdfe;
@@ -58,6 +66,10 @@
         --header-grad-2: #e94560;
         --container-bg: transparent;
         --heading-color: #f1f2f6;
+        --h1-color: #f1f2f6;
+        --h2-color: #f1f2f6;
+        --h3-color: #f1f2f6;
+        --header-title-color: #ffffff;
         --border-color: #2c3e50;
         --input-border: #34495e;
         --input-bg: #0f3460;
@@ -65,6 +77,40 @@
         --timer-text: #f1f2f6;
         --timer-subtext: #a4b0be;
         --drawer-bg: #1a1a2e;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 10px;
+        overflow-x: auto;
+      }
+
+      .tab-btn {
+        background: none;
+        border: none;
+        color: var(--text-color);
+        padding: 5px 10px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        border-radius: 5px;
+        transition: 0.3s;
+      }
+
+      .tab-btn.active {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid var(--header-grad-1);
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
       }
 
       /* Paused State Styling */
@@ -152,6 +198,7 @@
         margin: 0 0 0 15px;
         font-weight: 500;
         letter-spacing: 1px;
+        color: var(--header-title-color);
       }
       
       .hamburger-btn {
@@ -241,8 +288,10 @@
           grid-column: span 4;
         }
       }
-      h2, h3 { color: var(--heading-color); font-weight: 500; }
-      h2 { margin-top: 0; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
+      h2, h3 { font-weight: 500; }
+      h2 { color: var(--h2-color, var(--heading-color)); margin-top: 0; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
+      h3 { color: var(--h3-color, var(--heading-color)); }
+      .container h1 { color: var(--h1-color, var(--text-color)); }
       .form-group { margin-bottom: 1.5rem; }
       label { display: block; margin-bottom: 0.6rem; font-weight: 500; font-size: 0.95rem; }
       .inline-label { display: inline-block; margin-right: 1.2rem; font-weight: normal; }
@@ -611,32 +660,130 @@
         <div class="modal-content">
             <span class="modal-close">✕</span>
             <h2>Customization</h2>
-            <div class="form-group">
-                <label>Theme Preference:</label>
-                <button class="action-btn" id="theme-toggle-modal" style="background: var(--header-grad-1);">Toggle Dark Mode</button>
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="tab-themes">Themes</button>
+                <button class="tab-btn" data-tab="tab-sounds">Sounds</button>
+                <button class="tab-btn" data-tab="tab-integration">Integration</button>
+                <button class="tab-btn" data-tab="tab-advanced">Advanced</button>
             </div>
-            <div class="form-group">
-                <label class="toggle-switch">
-                  <input type="checkbox" id="toggle-header-dark-mode" checked>
-                  <span class="slider"></span>
-                </label> Show Dark Mode Toggle in Header
+
+            <div id="tab-themes" class="tab-content active" style="display: block;">
+                <div style="font-size: 1.1rem; margin-bottom: 15px; font-weight: 500;">Select current Theme:</div>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 260px; border-right: 1px solid var(--border-color); padding-right: 20px;">
+                        <h3 style="margin-top: 0; font-size: 1rem; color: var(--timer-subtext); margin-bottom: 15px;">Standard Themes</h3>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="radio" name="theme-selection" value="light" id="theme-radio-light" style="width: auto; margin: 0;" checked>
+                                <span>Light Mode (default)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="radio" name="theme-selection" value="dark" id="theme-radio-dark" style="width: auto; margin: 0;">
+                                <span>Dark Mode</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="radio" name="theme-selection" value="custom" id="theme-radio-custom" style="width: auto; margin: 0;">
+                                <span>@ Custom (create below)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div style="flex: 1; min-width: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.6; padding-left: 20px;">
+                        <h3 style="margin-top: 0; font-size: 1rem; color: var(--timer-subtext); width: 100%; text-align: center; margin-bottom: 20px;">Premium Themes</h3>
+                        <div style="font-size: 4rem; margin: 10px 0; color: var(--timer-subtext);">🔒</div>
+                        <div style="font-weight: 500; font-size: 1.1rem; letter-spacing: 1px; color: var(--timer-subtext);">Coming soon</div>
+                    </div>
+                </div>
+
+                <div id="custom-theme-options" style="margin-top: 25px; padding-top: 20px; border-top: 2px solid var(--border-color); opacity: 0.5; pointer-events: none; transition: opacity 0.3s;">
+                    <h3 style="margin-top: 0; font-size: 1.1rem; color: var(--timer-subtext); margin-bottom: 15px;">Custom Theme Creator</h3>
+                    <div style="display: flex; gap: 15px; align-items: flex-start; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 5px; align-items: center;">
+                            <label style="font-size: 0.75rem; color: var(--timer-subtext); font-weight: bold; text-transform: uppercase; text-align: center;">MAIN<br>color</label>
+                            <input type="color" id="custom-main-color" value="#6a11cb" style="width: 100%; height: 40px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 0; background: none;">
+                        </div>
+                        <div style="flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 5px; align-items: center;">
+                            <label style="font-size: 0.75rem; color: var(--timer-subtext); font-weight: bold; text-transform: uppercase; text-align: center;">ACCENT<br>color</label>
+                            <input type="color" id="custom-accent-color" value="#2575fc" style="width: 100%; height: 40px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 0; background: none;">
+                        </div>
+                        <div style="flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 5px; align-items: center;">
+                            <label style="font-size: 0.75rem; color: var(--timer-subtext); font-weight: bold; text-transform: uppercase; text-align: center;">HEADER TEXT<br>color</label>
+                            <input type="color" id="custom-header-title-color" value="#ffffff" style="width: 100%; height: 40px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 0; background: none;">
+                        </div>
+                        <div style="flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 5px; align-items: center;">
+                            <label style="font-size: 0.75rem; color: var(--timer-subtext); font-weight: bold; text-transform: uppercase; text-align: center;">HEADING 1<br>color</label>
+                            <input type="color" id="custom-h1-color" value="#2c3e50" style="width: 100%; height: 40px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 0; background: none;">
+                        </div>
+                        <div style="flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 5px; align-items: center;">
+                            <label style="font-size: 0.75rem; color: var(--timer-subtext); font-weight: bold; text-transform: uppercase; text-align: center;">HEADING 2<br>color</label>
+                            <input type="color" id="custom-h2-color" value="#2c3e50" style="width: 100%; height: 40px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 0; background: none;">
+                        </div>
+                        <div style="flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 5px; align-items: center;">
+                            <label style="font-size: 0.75rem; color: var(--timer-subtext); font-weight: bold; text-transform: uppercase; text-align: center;">HEADING 3<br>color</label>
+                            <input type="color" id="custom-h3-color" value="#2c3e50" style="width: 100%; height: 40px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 0; background: none;">
+                        </div>
+                        <div style="flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 5px; align-items: center;">
+                            <label style="font-size: 0.75rem; color: var(--timer-subtext); font-weight: bold; text-transform: uppercase; text-align: center;">NORMAL<br>text</label>
+                            <input type="color" id="custom-text-color" value="#4a4a4a" style="width: 100%; height: 40px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 0; background: none;">
+                        </div>
+                        <div style="flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 5px; align-items: center;">
+                            <label style="font-size: 0.75rem; color: var(--timer-subtext); font-weight: bold; text-transform: uppercase; text-align: center;">BG 1 START<br>color</label>
+                            <input type="color" id="custom-bg1-color" value="#f5f7fa" style="width: 100%; height: 40px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 0; background: none;">
+                        </div>
+                        <div style="flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 5px; align-items: center;">
+                            <label style="font-size: 0.75rem; color: var(--timer-subtext); font-weight: bold; text-transform: uppercase; text-align: center;">BG 1 END<br>(GRADIENT)</label>
+                            <input type="color" id="custom-bg1-grad-color" value="#c3cfe2" style="width: 100%; height: 40px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 0; background: none;">
+                        </div>
+                        <div style="flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 5px; align-items: center;">
+                            <label style="font-size: 0.75rem; color: var(--timer-subtext); font-weight: bold; text-transform: uppercase; text-align: center;">BG 2 COLOR<br>(CONTAINER)</label>
+                            <input type="color" id="custom-bg2-color" value="#ffffff" style="width: 100%; height: 40px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 0; background: none;">
+                        </div>
+                    </div>
+                    <button class="action-btn" id="reset-theme-colors-btn" style="width: 100%; margin-top: 15px; padding: 0.6rem; background: var(--timer-bg); color: var(--text-color); border: 1px solid var(--border-color); font-size: 0.85rem;">Reset Custom Colors</button>
+                </div>
+                <div style="margin-top: 25px; border-top: 2px solid var(--border-color); padding-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div style="font-weight: 500; font-size: 1.1rem;">Toggle settings</div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label class="toggle-switch" style="transform: scale(0.8);">
+                                <input type="checkbox" id="toggle-header-dark-mode" checked>
+                                <span class="slider"></span>
+                            </label>
+                            <span style="font-size: 0.9rem; color: var(--timer-subtext);">Show header toggle</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="chime-selector">Chime Sound:</label>
-                <div style="display: flex; gap: 10px;">
-                    <select id="chime-selector" style="flex: 1;">
-                        <option value="chime.mp3">Classic Chime</option>
-                        <option value="gentle.mp3">Gentle Notification</option>
-                        <option value="custom">Custom (Upload below)</option>
-                    </select>
-                    <button class="action-btn" id="test-chime-btn" style="margin-top: 0; width: auto; padding: 0.85rem; background: var(--header-grad-1);">Test</button>
+
+            <div id="tab-sounds" class="tab-content">
+                <div class="form-group">
+                    <label for="chime-selector">Chime Sound:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="chime-selector" style="flex: 1;">
+                            <option value="chime.mp3">Classic Chime</option>
+                            <option value="gentle.mp3">Gentle Notification</option>
+                            <option value="custom">Custom (Upload below)</option>
+                        </select>
+                        <button class="action-btn" id="test-chime-btn" style="margin-top: 0; width: auto; padding: 0.85rem; background: var(--header-grad-1);">Test</button>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label>Volume:</label>
+                        <input type="range" id="chime-volume" min="0" max="1" step="0.1" value="1" style="width: 100%;">
+                    </div>
+                    <input type="file" id="chime-file-input" accept="audio/*" style="display: none;">
+                    <button class="action-btn" id="upload-chime-btn" style="margin-top: 10px; width: 100%; background: var(--header-grad-1);">Upload Custom Chime</button>
                 </div>
-                <div style="margin-top: 10px;">
-                    <label>Volume:</label>
-                    <input type="range" id="chime-volume" min="0" max="1" step="0.1" value="1" style="width: 100%;">
+            </div>
+
+            <div id="tab-integration" class="tab-content">
+                <div style="text-align: center; color: var(--timer-subtext); padding: 2rem 0;">
+                    <em>Integration options coming soon.</em>
                 </div>
-                <input type="file" id="chime-file-input" accept="audio/*" style="display: none;">
-                <button class="action-btn" id="upload-chime-btn" style="margin-top: 10px; width: 100%; background: var(--header-grad-1);">Upload Custom Chime</button>
+            </div>
+
+            <div id="tab-advanced" class="tab-content">
+                <div style="text-align: center; color: var(--timer-subtext); padding: 2rem 0;">
+                    <em>Advanced options coming soon.</em>
+                </div>
             </div>
         </div>
     </div>

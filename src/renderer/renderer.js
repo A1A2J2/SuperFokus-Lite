@@ -6,7 +6,7 @@ import { store, migrateStore } from './utils/storage.js';
 migrateStore();
 
 import { customAlert, closeSidebar, toggleSidebar } from './ui/modals.js';
-import { toggleTheme, applyTheme, applyHeaderToggleVisibility } from './ui/theme.js';
+import { initTheme, toggleTheme, applyTheme, applyHeaderToggleVisibility } from './ui/theme.js';
 import { updateStatsUI, renderChart } from './utils/stats.js';
 import { isPomoRunning, stopPomoStyle } from './features/pomo-timer.js';
 import { isRepeatingRunning, stopRepeatingReminders, initializeRepeatingButtonListeners } from './features/repeating.js';
@@ -46,6 +46,7 @@ window.addEventListener('DOMContentLoaded', () => {
         // Execute actual initialization at specific steps to synchronize progress
         if (currentStep === 1) {
             initializeDomElements();
+            initTheme();
         } else if (currentStep === 3) {
             initializeButtonListeners();
             updateStatsUI();
